@@ -1,0 +1,433 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Apex Pack Simulator</title>
+    <!-- Load Tailwind CSS --><script src="https://cdn.tailwindcss.com"></script>
+    <!-- Use Inter font --><style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap');
+        body { font-family: 'Inter', sans-serif; }
+        
+        /* Apex Legends Background (Updated) */
+        body {
+            background-image: url('https://images.ecestaticos.com/DmnGySZoKM8soK2sUdVt9v6CJo8=/0x0:1634x818/1200x900/filters:fill(white):format(jpg)/f.elconfidencial.es%2Foriginal%2Fdb7%2Ffa3%2F5bf%2Fdb7fa35bf4ce8b6e6969de4249b2a0e6.jpg'); /* New Apex background */
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
+            position: relative;
+        }
+        body::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            /* Maintaining a dark red overlay for contrast */
+            background: linear-gradient(135deg, rgba(77, 0, 0, 0.85) 0%, rgba(13, 0, 0, 0.95) 100%);
+            z-index: 1;
+        }
+        .container-wrapper {
+            position: relative;
+            z-index: 2;
+            width: 100%;
+            max-width: 4xl;
+        }
+
+        .text-mythic { color: #cc3232; } /* Apex Red/Crimson for Mythic/Heirloom */
+        .text-legendary { color: #ffd700; } /* Gold */
+        .text-epic { color: #a020f0; } /* Purple */
+        .text-rare { color: #007bff; } /* Blue */
+        .text-common { color: #f0f0f0; } /* White/Grey */
+
+        /* Custom card styling based on rarity */
+        .card-common { border-left: 5px solid #ccc; }
+        .card-rare { border-left: 5px solid #007bff; }
+        .card-epic { border-left: 5px solid #a020f0; }
+        .card-legendary { border-left: 5px solid #ffd700; }
+        .card-mythic { border-left: 5px solid #cc3232; animation: pulse 1s infinite alternate; }
+
+        @keyframes pulse {
+            from { box-shadow: 0 0 10px #cc3232; }
+            to { box-shadow: 0 0 20px #cc3232; }
+        }
+
+        .pack-open-btn, .reset-btn {
+            background-color: #cc3232;
+            transition: all 0.2s ease;
+        }
+        .pack-open-btn:hover, .reset-btn:hover {
+            background-color: #ff5757;
+            transform: scale(1.05);
+        }
+        .pack-open-btn:active, .reset-btn:active {
+            background-color: #990000;
+        }
+        .reset-btn {
+            background-color: #6B7280; /* Gray for reset */
+        }
+        .reset-btn:hover {
+            background-color: #4B5563;
+        }
+
+        /* Apex Pack Image Styling */
+        .apex-pack-image {
+            filter: drop-shadow(0 0 15px rgba(255, 215, 0, 0.7));
+            max-width: 200px; /* Increased size for prominence */
+            height: auto;
+            margin-bottom: 1.5rem; /* Added space below the image */
+        }
+    </style>
+</head>
+<body class="min-h-screen flex items-center justify-center p-4 text-white">
+
+    <div class="container-wrapper bg-gray-900/90 p-8 rounded-xl shadow-2xl border border-gray-700">
+        <!-- Header --><header class="text-center mb-8">
+            <h1 class="text-4xl font-extrabold text-legendary tracking-wider">APEX PACK SIMULATOR</h1>
+            <p class="text-gray-400 mt-2 text-sm">Based on official minimum drop rates and the 500-pack pity timer.</p>
+        </header>
+
+        <!-- Stats Panel & Drop Rates --><div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+            <div class="bg-gray-800 p-4 rounded-lg border border-gray-700">
+                <h2 class="text-xl font-bold mb-2">Pity Timers & Stats</h2>
+                <div class="space-y-1 text-sm">
+                    <p>Packs Opened: <span id="packs-opened" class="font-bold text-lg text-white">0</span></p>
+                    <p>Packs Since Legendary: <span id="legendary-pity" class="font-bold text-lg text-epic">0 / 30</span></p>
+                    <p>Packs Since Heirloom: <span id="heirloom-pity" class="font-bold text-lg text-mythic">0 / 500</span></p>
+                    <p>Total Heirlooms: <span id="total-heirlooms" class="font-bold text-lg text-mythic">0</span></p>
+                </div>
+            </div>
+
+            <div class="bg-gray-800 p-4 rounded-lg border border-gray-700">
+                <h2 class="text-xl font-bold mb-2">Drop Rates (Minimum)</h2>
+                <div class="text-sm space-y-1">
+                    <p class="text-rare">At least 1 Rare/Better: <span class="font-bold">100%</span></p>
+                    <p class="text-epic">At least 1 Epic/Better: <span class="font-bold">24.8%</span></p>
+                    <p class="text-legendary">At least 1 Legendary/Better: <span class="font-bold">7.4%</span></p>
+                    <p class="text-mythic">Heirloom Shards: <span class="font-bold">0.045%</span> <span class="text-xs">(Guaranteed every 500 packs)</span></p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Pack Opening Area --><div class="flex flex-col items-center justify-center space-y-6">
+            <!-- Apex Pack Image --><img src="https://admin.esports.gg/wp-content/uploads/2024/02/apex-legends-anniversary-fifth-collection-event-heirloom-shards.jpg" alt="Apex Pack" class="apex-pack-image">
+
+            <!-- Buttons --><div class="grid grid-cols-2 sm:grid-cols-4 gap-4 w-full max-w-2xl">
+                <button onclick="openPacks(1)" class="pack-open-btn font-semibold py-3 px-4 rounded-lg shadow-lg">Open 1 Pack</button>
+                <button onclick="openPacks(10)" class="pack-open-btn font-semibold py-3 px-4 rounded-lg shadow-lg">Open 10 Packs</button>
+                <button onclick="openPacks(100)" class="pack-open-btn font-semibold py-3 px-4 rounded-lg shadow-lg">Open 100 Packs</button>
+                <button onclick="openCustomPacks()" class="pack-open-btn font-semibold py-3 px-4 rounded-lg shadow-lg">Custom Amount</button>
+            </div>
+            
+            <!-- Reset Button --><button onclick="resetSimulator()" class="reset-btn font-semibold py-2 px-6 rounded-lg shadow-lg mt-4">Reset Simulator</button>
+        </div>
+
+        <!-- Results Display --><div id="results-container" class="mt-8">
+            <h2 class="text-2xl font-bold mb-4 border-b border-gray-700 pb-2">Loot History</h2>
+            <div id="results-list" class="space-y-3 max-h-96 overflow-y-auto pr-2 bg-gray-900/50 p-3 rounded-lg">
+                <p class="text-gray-500 text-center">Open a pack to see the results!</p>
+            </div>
+        </div>
+
+        <!-- Custom Pack Modal (Hidden by default) --><div id="custom-modal" class="hidden fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50">
+            <div class="bg-gray-800 p-6 rounded-lg shadow-2xl w-full max-w-sm border border-gray-700">
+                <h3 class="text-xl font-bold mb-4">Open Custom Number of Packs</h3>
+                <input type="number" id="custom-pack-input" placeholder="Enter number of packs (max 10,000)" min="1" max="10000" class="w-full p-2 rounded bg-gray-900 border border-gray-700 text-white mb-4">
+                <div class="flex justify-end space-x-3">
+                    <button onclick="closeCustomModal()" class="bg-gray-600 hover:bg-gray-500 text-white font-semibold py-2 px-4 rounded-lg">Cancel</button>
+                    <button onclick="submitCustomPacks()" class="pack-open-btn text-white font-semibold py-2 px-4 rounded-lg">Open Packs</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Reset Confirmation Modal (NEW) -->
+        <div id="reset-modal" class="hidden fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50">
+            <div class="bg-gray-800 p-6 rounded-lg shadow-2xl w-full max-w-sm border border-gray-700">
+                <h3 class="text-xl font-bold mb-4 text-legendary">Confirm Reset</h3>
+                <p class="text-white mb-6">Are you sure you want to reset the simulator? All progress, including opened packs and pity counters, will be lost permanently.</p>
+                <div class="flex justify-end space-x-3">
+                    <button onclick="closeResetModal()" class="bg-gray-600 hover:bg-gray-500 text-white font-semibold py-2 px-4 rounded-lg">Cancel</button>
+                    <button onclick="performReset()" class="pack-open-btn text-white font-semibold py-2 px-4 rounded-lg">Confirm Reset</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Notification Modal (NEW - For errors/alerts) -->
+        <div id="notification-modal" class="hidden fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50">
+            <div class="bg-gray-800 p-6 rounded-lg shadow-2xl w-full max-w-xs border border-gray-700">
+                <h3 id="notification-title" class="text-xl font-bold mb-3 text-mythic">Error</h3>
+                <p id="notification-message" class="text-white mb-6">Error Message Here.</p>
+                <div class="flex justify-center">
+                    <button onclick="closeNotificationModal()" class="pack-open-btn text-white font-semibold py-2 px-4 rounded-lg">OK</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- Core State Variables ---
+        let packsOpened = 0;
+        let packsSinceHeirloom = 0; // Pity counter for 500
+        let packsSinceLegendary = 0; // Pity counter for 30
+        let totalHeirlooms = 0;
+
+        // --- DOM Elements ---
+        const packsOpenedEl = document.getElementById('packs-opened');
+        const legendaryPityEl = document.getElementById('legendary-pity');
+        const heirloomPityEl = document.getElementById('heirloom-pity');
+        const totalHeirloomsEl = document.getElementById('total-heirlooms');
+        const resultsListEl = document.getElementById('results-list');
+        const customModalEl = document.getElementById('custom-modal');
+
+        // --- Rarity Data & Drop Weights (Per Item Slot) ---
+        const RARITIES = {
+            "MYTHIC": { name: "HEIRLOOM SHARDS", color: "text-mythic", class: "card-mythic", weight: 0 },
+            "LEGENDARY": { name: "Legendary", color: "text-legendary", class: "card-legendary", weight: 5 },
+            "EPIC": { name: "Epic", color: "text-epic", class: "card-epic", weight: 20 },
+            "RARE": { name: "Rare", color: "text-rare", class: "card-rare", weight: 40 },
+            "COMMON": { name: "Common", color: "text-common", class: "card-common", weight: 35 }
+        };
+        
+        const WEIGHT_SUM = Object.values(RARITIES).reduce((sum, r) => sum + r.weight, 0);
+
+        // --- Modal Functions (New/Updated) ---
+
+        function showNotificationModal(title, message) {
+            document.getElementById('notification-title').textContent = title;
+            document.getElementById('notification-message').textContent = message;
+            document.getElementById('notification-modal').classList.remove('hidden');
+        }
+
+        function closeNotificationModal() {
+            document.getElementById('notification-modal').classList.add('hidden');
+        }
+        
+        function openCustomPacks() {
+            customModalEl.classList.remove('hidden');
+        }
+
+        function closeCustomModal() {
+            customModalEl.classList.add('hidden');
+            document.getElementById('custom-pack-input').value = '';
+        }
+
+        function resetSimulator() {
+            // Show reset confirmation modal instead of using the blocked confirm()
+            document.getElementById('reset-modal').classList.remove('hidden');
+        }
+
+        function closeResetModal() {
+            document.getElementById('reset-modal').classList.add('hidden');
+        }
+
+        function performReset() {
+            // Core reset logic moved here
+            packsOpened = 0;
+            packsSinceHeirloom = 0;
+            packsSinceLegendary = 0;
+            totalHeirlooms = 0;
+            
+            resultsListEl.innerHTML = '<p class="text-gray-500 text-center">Open a pack to see the results!</p>';
+            updateUI();
+            closeResetModal();
+        }
+
+        // --- Utility Functions ---
+
+        function rollRarity(isGuaranteedLegendary = false) {
+            if (isGuaranteedLegendary) {
+                return 'LEGENDARY';
+            }
+
+            let roll = Math.random() * WEIGHT_SUM;
+            let cumulativeWeight = 0;
+
+            for (const key in RARITIES) {
+                if (key === "MYTHIC") continue;
+
+                cumulativeWeight += RARITIES[key].weight;
+                if (roll < cumulativeWeight) {
+                    return key;
+                }
+            }
+            return 'COMMON';
+        }
+
+        function generatePackLoot() {
+            let loot = [];
+            let isGuaranteedLegendary = false;
+            let hasRareOrBetter = false;
+
+            // 0.045% chance to drop Heirloom Shards (1 in 2222.22 packs)
+            const heirloomRoll = Math.floor(Math.random() * 100000);
+            if (heirloomRoll < 45) {
+                return ['MYTHIC'];
+            }
+
+            if (packsSinceLegendary === 29) {
+                isGuaranteedLegendary = true;
+                packsSinceLegendary = -1; // Resets to 0 after post-increment
+            }
+
+            for (let i = 0; i < 3; i++) {
+                let rarityKey = rollRarity(i === 0 && isGuaranteedLegendary);
+                loot.push(rarityKey);
+                
+                if (rarityKey !== 'COMMON') {
+                    hasRareOrBetter = true;
+                }
+            }
+
+            if (!hasRareOrBetter) {
+                const commonIndex = loot.findIndex(r => r === 'COMMON');
+                if (commonIndex !== -1) {
+                    loot[commonIndex] = 'RARE';
+                }
+            }
+
+            packsSinceLegendary++;
+            
+            return loot;
+        }
+
+        function openPacks(numPacks) {
+            if (numPacks > 10000) {
+                // Replaced alert() with modal
+                showNotificationModal('Limit Reached', 'Please limit pack opening to 10,000 for performance reasons.');
+                return;
+            }
+
+            const results = [];
+            let heirloomFoundThisBatch = false; 
+
+            for (let i = 0; i < numPacks; i++) {
+                let currentLoot;
+                // Heirloom Pity Check
+                if (packsSinceHeirloom === 499 && !heirloomFoundThisBatch) { 
+                    currentLoot = ['MYTHIC'];
+                    packsSinceHeirloom = -1;
+                    totalHeirlooms++;
+                    heirloomFoundThisBatch = true;
+                } else {
+                    currentLoot = generatePackLoot();
+                }
+
+                results.push({
+                    packNum: packsOpened + 1,
+                    loot: currentLoot
+                });
+
+                // Check if heirloom was found (either by pity or by random roll)
+                if (currentLoot.includes('MYTHIC') && !heirloomFoundThisBatch) {
+                    totalHeirlooms++;
+                    packsSinceHeirloom = -1;
+                    heirloomFoundThisBatch = true;
+                }
+
+                packsOpened++;
+                packsSinceHeirloom++;
+            }
+
+            updateUI();
+            logResults(results);
+        }
+
+        function logResults(results) {
+            if (resultsListEl.children.length === 1 && resultsListEl.children[0].classList.contains('text-gray-500')) {
+                resultsListEl.innerHTML = '';
+            }
+
+            let newLogs = '';
+            let newHeirloomLog = '';
+
+            results.reverse().forEach(result => {
+                const packNumber = result.packNum;
+                const items = result.loot;
+                let maxRarityKey = 'COMMON';
+
+                items.forEach(key => {
+                    if (key === 'MYTHIC') maxRarityKey = 'MYTHIC';
+                    else if (key === 'LEGENDARY' && maxRarityKey !== 'MYTHIC') maxRarityKey = 'LEGENDARY';
+                    else if (key === 'EPIC' && maxRarityKey !== 'MYTHIC' && maxRarityKey !== 'LEGENDARY') maxRarityKey = 'EPIC';
+                    else if (key === 'RARE' && maxRarityKey === 'COMMON') maxRarityKey = 'RARE';
+                });
+
+                const maxRarity = RARITIES[maxRarityKey];
+                const rarityColor = maxRarity.color;
+
+                const itemDetails = items.map(key => {
+                    const rarity = RARITIES[key];
+                    return `<span class="${rarity.color} font-semibold">${rarity.name}</span>`;
+                }).join(', ');
+                
+                if (maxRarityKey === 'MYTHIC') {
+                    newHeirloomLog = `
+                        <div class="p-3 rounded-lg bg-gray-700/80 ${maxRarity.class} mb-4 animate-pulse">
+                            <p class="text-lg font-extrabold ${rarityColor} ">PACK #${packNumber}: MYTHIC DROP!</p>
+                            <p class="text-white text-base">🎉 You received 150 Heirloom Shards! 🎉</p>
+                        </div>
+                    ` + newHeirloomLog; 
+                } else {
+                    newLogs += `
+                        <div class="p-3 rounded-lg bg-gray-700/80 ${maxRarity.class}">
+                            <p class="text-sm font-semibold ${rarityColor}">PACK #${packNumber}: Best item: ${maxRarity.name}</p>
+                            <p class="text-xs text-gray-300">Items: ${itemDetails}</p>
+                        </div>
+                    `;
+                }
+            });
+
+            resultsListEl.insertAdjacentHTML('afterbegin', newHeirloomLog + newLogs);
+
+            while (resultsListEl.children.length > 100) {
+                resultsListEl.removeChild(resultsListEl.lastChild);
+            }
+        }
+
+        function updateUI() {
+            packsOpenedEl.textContent = packsOpened.toLocaleString();
+            totalHeirloomsEl.textContent = totalHeirlooms.toLocaleString();
+
+            legendaryPityEl.textContent = `${packsSinceLegendary} / 30`;
+            if (packsSinceLegendary === 29) {
+                legendaryPityEl.classList.remove('text-epic');
+                legendaryPityEl.classList.add('text-legendary');
+            } else {
+                legendaryPityEl.classList.add('text-epic');
+                legendaryPityEl.classList.remove('text-legendary');
+            }
+
+            heirloomPityEl.textContent = `${packsSinceHeirloom} / 500`;
+            heirloomPityEl.classList.remove('text-legendary', 'text-mythic');
+            if (packsSinceHeirloom >= 400 && packsSinceHeirloom < 499) {
+                heirloomPityEl.classList.add('text-legendary');
+            } else if (packsSinceHeirloom === 499) {
+                heirloomPityEl.classList.add('text-mythic');
+            }
+        }
+
+        function submitCustomPacks() {
+            const inputEl = document.getElementById('custom-pack-input');
+            const count = parseInt(inputEl.value, 10);
+
+            if (isNaN(count) || count < 1 || count > 10000) {
+                // Replaced alert() with modal
+                showNotificationModal('Invalid Amount', 'Please enter a valid number between 1 and 10,000.');
+                return;
+            }
+
+            closeCustomModal();
+            openPacks(count);
+        }
+
+        // Initialize UI on load
+        document.addEventListener('DOMContentLoaded', updateUI);
+    </script>
+</body>
+</html>
